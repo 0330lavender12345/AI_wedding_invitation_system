@@ -9,7 +9,7 @@ function convertTextToHtml(text) {
     .join('');
 }
 
-function Form() {
+function Form({ onLogout }) {
   const [brideName, setBrideName] = useState('');
   const [groomName, setGroomName] = useState('');
   const [weddingDate, setWeddingDate] = useState('');
@@ -145,6 +145,10 @@ function Form() {
 
   return (
     <div style={{ maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
+      <div style={{ textAlign: 'right' }}>
+        <button onClick={onLogout}>登出</button>
+      </div>
+
       <h2>婚禮喜帖邀請函</h2>
 
       <div>
