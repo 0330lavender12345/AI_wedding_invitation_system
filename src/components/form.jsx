@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Papa from 'papaparse';
 
 // 將換行的純文字轉換為 HTML 段落
 function convertTextToHtml(text) {
@@ -21,6 +22,9 @@ function Form() {
 
   const [invitationContent, setInvitationContent] = useState('');
 
+  const [guests, setGuests] = useState([]); // CSV 上傳來賓資料
+  const [sentGuests, setSentGuests] = useState([]); // 已寄出清單
+
   useEffect(() => {
     const savedBrideName = localStorage.getItem('brideName');
     const savedGroomName = localStorage.getItem('groomName');
@@ -32,6 +36,27 @@ function Form() {
     if (savedWeddingDate) setWeddingDate(savedWeddingDate);
     if (savedWeddingLocation) setWeddingLocation(savedWeddingLocation);
   }, []);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        setGuests(results.data);
+      },
+    });
+  };
+
+  const handleSelectGuest = (guest) => {
+    setGuestName(guest['姓名'] || '');
+    setGuestEmail(guest['Email'] || '');
+    setRelationship(guest['關係'] || '');
+    setDescription(guest['描述'] || '');
+  };
+
 
   const handleGenerate = async () => {
     const formData = {
@@ -45,7 +70,7 @@ function Form() {
     };
 
     try {
-      const response = await fetch('https://leolee218039.app.n8n.cloud/webhook/se', {
+      const response = await fetch('https://yuchiao.app.n8n.cloud/webhook/se', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -73,7 +98,7 @@ function Form() {
     };
   
     try {
-      const response = await fetch('https://leolee218039.app.n8n.cloud/webhook/send-email', {
+      const response = await fetch('https://yuchiao.app.n8n.cloud/webhook/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -81,11 +106,31 @@ function Form() {
   
       if (response.ok) {
         alert('邀請函已寄出！');
+
+
+        //已寄出的做標記
+        setGuests((prevGuests) =>
+          prevGuests.map((guest) =>
+            guest['Email'] === guestEmail ? { ...guest, sent: true } : guest
+          )
+        );
+
+        // 清空欄位
         setGuestName('');
         setGuestEmail('');
         setRelationship('');
         setDescription('');
         setInvitationContent('');
+
+        
+        // 加入 sentGuests 陣列（如果你有顯示寄出記錄的話）
+        setSentGuests((prev) => [
+          ...prev,
+          { name: guestName, email: guestEmail, relationship, description },
+        ]);
+
+
+      
       } else {
         alert('寄送失敗');
       }
@@ -95,6 +140,8 @@ function Form() {
     }
   };
   
+  const currentGuestSent = guests.find((g) => g['Email'] === guestEmail)?.sent;
+
 
   return (
     <div style={{ maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
@@ -114,6 +161,35 @@ function Form() {
         <input type="text" value={weddingLocation} onChange={(e) => setWeddingLocation(e.target.value)} />
       </div>
 
+      
+      
+      <hr style={{ margin: '20px 0' }} />
+
+      <div>
+        <label>📁 上傳來賓 CSV：</label>
+        <input type="file" accept=".csv" onChange={handleFileUpload} />
+      </div>
+
+      {guests.length > 0 && (
+        <div style={{ marginTop: '20px' }}>
+          <h4>📋 來賓清單（點選填入）</h4>
+          <ul>
+            {guests.map((guest, index) => (
+              <li
+                key={index}
+                style={{
+                  cursor: guest.sent ? 'not-allowed' : 'pointer',
+                  marginBottom: '8px',
+                  color: guest.sent ? '#aaa' : 'black',
+                }}
+                onClick={() => handleSelectGuest(guest)}
+              >
+                {guest['姓名']} ({guest['Email']}) {guest.sent && '✅ 已送出'}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div style={{ marginTop: '20px' }}>
         <label>來賓姓名：</label>
         <input type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)} />
@@ -157,7 +233,27 @@ function Form() {
             }}
           />
 
-          <button onClick={handleSend} style={{ marginTop: '20px' }}>送出邀請函</button>
+<button
+            onClick={handleSend}
+            style={{ marginTop: '20px' }}
+            disabled={currentGuestSent}
+          >
+            送出邀請函
+          </button>
+        </div>
+      )}
+      {sentGuests.length > 0 && (
+        <div style={{ marginTop: '40px' }}>
+          <h3>📤 已寄出清單</h3>
+          <ul>
+            {sentGuests.map((guest, index) => (
+              <li key={index} style={{ marginBottom: '8px' }}>
+                ✅ {guest.name} ({guest.email}) - {guest.relationship}
+                <br />
+                <span style={{ fontSize: '0.9em', color: '#555' }}>{guest.description}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
