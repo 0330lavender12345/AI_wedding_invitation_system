@@ -1,11 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 
-function convertTextToHtml(text) {
-  return text
-    .split('\n\n')
-    .map((para) => `<p>${para.trim()}</p>`)
-    .join('');
+function convertTextToHtml(text, brideName, groomName, weddingDate, weddingLocation, guestName) {
+  // Split the text into paragraphs and filter out empty ones
+  const paragraphs = text.split('\n\n').map(para => para.trim()).filter(para => para);
+
+  // Check if the first paragraph already contains a greeting like "Dear" or "親愛的"
+  const hasGreeting = paragraphs.length > 0 && 
+    (paragraphs[0].toLowerCase().includes('dear') || paragraphs[0].includes('親愛的'));
+
+  // Generate the HTML invitation
+  return `
+    <div style="max-width: 600px; margin: 20px auto; background-color: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 30px; font-family: 'Georgia', serif; line-height: 1.6; color: #333;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h1 style="font-size: 28px; color: #4A2C1F; margin: 0;">Wedding Invitation</h1>
+        <h2 style="font-size: 22px; color: #4A2C1F; margin: 10px 0;">${brideName} & ${groomName}</h2>
+        <hr style="border: 0; border-top: 2px solid #D4A373; width: 50px; margin: 10px auto;">
+      </div>
+      <div style="margin-bottom: 20px;">
+        ${!hasGreeting ? `<p style="font-size: 16px; color: #555;">親愛的 ${guestName}，</p>` : ''}
+        ${paragraphs.map(para => `<p style="font-size: 16px; color: #555; margin: 10px 0;">${para}</p>`).join('')}
+      </div>
+      <div style="background-color: #F9F5F0; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h3 style="font-size: 20px; color: #4A2C1F; margin: 0 0 10px 0;">婚禮詳情</h3>
+        <p style="font-size: 16px; color: #555; margin: 5px 0;"><strong>日期：</strong> ${weddingDate}</p>
+        <p style="font-size: 16px; color: #555; margin: 5px 0;"><strong>地點：</strong> ${weddingLocation}</p>
+      </div>
+      <div style="text-align: center;">
+        <p style="font-size: 16px; color: #555; margin: 0;">我們誠摯邀請您共襄盛舉，分享我們的喜悅。</p>
+      </div>
+    </div>
+  `;
 }
 
 function Form() {
@@ -40,6 +65,7 @@ function Form() {
   const [saveButtonState, setSaveButtonState] = useState('ready');
   const [sendButtonState, setSendButtonState] = useState('ready');
 
+  const [generateButtonState, setGenerateButtonState] = useState('ready'); // 'ready', 'generating', 'generated'
 
   useEffect(() => {
     const savedBrideName = localStorage.getItem('brideName');
@@ -67,6 +93,7 @@ function Form() {
       setNotification({ show: false, message: '', type: '' });
     }, 3000);
   };
+
   const handleClearInvitedGuests = () => {
     localStorage.removeItem('invitedGuests');
     setInvitedGuests([]);
@@ -82,7 +109,6 @@ function Form() {
       localStorage.setItem('groomName', groomName);
       localStorage.setItem('weddingDate', weddingDate);
       localStorage.setItem('weddingLocation', weddingLocation);
-
 
       setSaveButtonState('saved');
       showNotification('婚禮基本資訊已儲存！');
@@ -111,7 +137,6 @@ function Form() {
           };
         });
 
-
         setGuests(cleanedData);
         showNotification('CSV 檔案上傳成功！');
       },
@@ -119,7 +144,6 @@ function Form() {
         showNotification('CSV 檔案讀取失敗', 'error');
       }
     });
-
   };
 
   const handleSelectGuest = (guest) => {
@@ -129,9 +153,6 @@ function Form() {
     setDescription(guest['描述'] || '');
     setShowGuestInfo(true);
   };
-
-
-  const [generateButtonState, setGenerateButtonState] = useState('ready'); // 'ready', 'generating', 'generated'
 
   const handleGenerate = async () => {
     if (!brideName || !groomName || !weddingDate || !weddingLocation || !guestName) {
@@ -190,12 +211,11 @@ function Form() {
       return;
     }
 
-    // 設置按鈕狀態為發送中
     setSendButtonState('sending');
     setIsSending(true);
-    const htmlFormatted = invitationContent.includes('<p>')
-      ? invitationContent
-      : convertTextToHtml(invitationContent);
+    const htmlFormatted = invitationContent.includes('<div') 
+      ? invitationContent 
+      : convertTextToHtml(invitationContent, brideName, groomName, weddingDate, weddingLocation, guestName);
     const formData = {
       brideName,
       groomName,
@@ -205,7 +225,7 @@ function Form() {
       guestEmail,
       relationship,
       description,
-      invitationContent,
+      invitationContent: htmlFormatted,
     };
 
     try {
@@ -349,7 +369,6 @@ function Form() {
     width: '220px',
   };
 
-
   const searchInputStyle = {
     ...inputStyle,
     marginBottom: '15px',
@@ -357,7 +376,6 @@ function Form() {
     border: '1px solid rgba(255, 255, 255, 0.3)',
     padding: '10px 15px',
   };
-
 
   const containerStyle = {
     display: 'flex',
@@ -371,7 +389,6 @@ function Form() {
     transition: 'width 0.5s ease',
   };
 
-
   const historySidebarStyle = {
     width: '35%',
     padding: '30px',
@@ -383,7 +400,6 @@ function Form() {
     transition: 'opacity 0.5s ease',
   };
 
-
   const spinnerStyle = {
     width: '16px',
     height: '16px',
@@ -393,7 +409,6 @@ function Form() {
     animation: 'spin 1s linear infinite',
     marginRight: '10px',
   };
-
 
   const notificationStyle = {
     position: 'fixed',
@@ -484,7 +499,7 @@ function Form() {
               paddingLeft: '12px'
             }}>Wedding Information <span style={{ fontSize: '16px', color: '#ddd' }}></span></h3>
 
-            <p style={{ fontSize: '14px', color: '#ddd', marginBottom: '20px' }}>Please fill in your basic wedding information. These details will be used to generate all invitations.</p>
+            <p style={{ fontSize: '14px', color: ':#ddd', marginBottom: '20px' }}>Please fill in your basic wedding information. These details will be used to generate all invitations.</p>
 
             <div className="input-group" style={{ display: 'flex', gap: '20px', marginBottom: '15px' }}>
               <div className="input-field" style={{ flex: 1 }}>
@@ -561,7 +576,6 @@ function Form() {
                 {saveButtonState === 'saved' && 'Saved successfully'}
               </button>
 
-              {/* CSV 上傳按鈕 */}
               <div style={{ marginTop: '20px' }}>
                 <label
                   htmlFor="csv-upload"
@@ -588,7 +602,6 @@ function Form() {
             </div>
           </div>
 
-          {/* 來賓資訊表單 - 只有在選擇來賓後才顯示 */}
           {showGuestInfo && (
             <div className="form-section" style={{
               backgroundColor: 'transparent',
@@ -645,7 +658,7 @@ function Form() {
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ex：We shared many wonderful moments during our college years. I truly hope you can join us on this most important day."
+                  placeholder="Ex：Wejór shared many wonderful moments during our college years. I truly hope you can join us on this most important day."
                   style={{
                     ...inputStyle,
                     height: '120px',
@@ -696,7 +709,6 @@ function Form() {
                 boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
                 border: '1px solid #e8e8e8'
               }}>
-                {/* Changed h3 to have Preview & Edit on top line and 邀請函預覽與編輯 below it */}
                 <h3 style={{
                   fontSize: '22px',
                   marginBottom: '20px',
@@ -704,12 +716,11 @@ function Form() {
                   textAlign: 'center',
                   paddingBottom: '15px'
                 }}>
-                  Preview & Edit<br />
-
+                  預覽與編輯<br />
                 </h3>
 
                 <p style={{ fontSize: '14px', color: '#ddd', marginBottom: '20px', textAlign: 'center' }}>
-                  You can edit the invitation content below. Please review it carefully before sending.
+                  您可以在下方編輯邀請函內容，請在寄送前仔細檢查。
                 </p>
 
                 <textarea
@@ -734,7 +745,7 @@ function Form() {
                   color: '#ddd',
                   fontWeight: '500'
                 }}>
-                  Gmail Preview
+                  Gmail 預覽
                 </h4>
 
                 <div
@@ -750,14 +761,13 @@ function Form() {
                     fontSize: '15px'
                   }}
                   dangerouslySetInnerHTML={{
-                    __html: invitationContent.includes('<p>')
-                      ? invitationContent
-                      : convertTextToHtml(invitationContent),
+                    __html: invitationContent.includes('<div') 
+                      ? invitationContent 
+                      : convertTextToHtml(invitationContent, brideName, groomName, weddingDate, weddingLocation, guestName),
                   }}
                 />
               </div>
 
-              {/* Moved Send button outside the preview container */}
               <div style={{ textAlign: 'center' }}>
                 <button
                   onClick={handleSend}
@@ -792,7 +802,6 @@ function Form() {
           )}
         </div>
 
-        {/* Guest List sidebar - appears when CSV is uploaded */}
         <div className="history-sidebar" style={historySidebarStyle}>
           <h3 style={{
             fontSize: '22px',
@@ -805,7 +814,6 @@ function Form() {
             Guest List <span style={{ fontSize: '16px', color: '#ddd' }}></span>
           </h3>
 
-          {/* Search box */}
           <div className="search-container" style={{ marginBottom: '20px' }}>
             <input
               type="text"
@@ -879,7 +887,6 @@ function Form() {
                 guest['姓名']?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 guest['Email']?.toLowerCase().includes(searchTerm.toLowerCase())
               ).length !== 1 ? 's' : ''})`}
-
             </p>
           </div>
         </div>
