@@ -2,12 +2,6 @@
 由 AI 產出獨一無二的電子邀請函，並整合 Gmail 發送，讓婚禮賓客可收到專屬於自己的喜帖內容。<br>
 \* 此為 113-2 軟體專案管理之期中專案<br>
 
-## 使用方法
-* 由於此專案未正式上線，需要從開發者環境開啟
-* 我們的 ChatGPT API 有使用限制，很可能無法正確生成 
-1. 確保你有安裝 Node.js 以及套件 papaparse，若無安裝請自行安裝
-2. 在 AI_wedding_invitation_system 資料夾內執行 ```npm run dev```
-
 ## 協作者名單
 此專案由以下幾位同學共同協作。（按照字母順序）<br>
 [lavender0330](https://github.com/0330lavender12345)<br>
