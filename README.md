@@ -4,7 +4,7 @@
 
 ## 協作者名單
 此專案由以下幾位同學共同協作。（按照字母順序）<br>
-[lavender0330](https://github.com/0330lavender12345)<br>
+[RinYu](https://github.com/DlsuMtStyle)<br>
 [linyuchiao](https://github.com/0330lavender12345)<br>
 [ll218039](https://github.com/ll218039)<br>
 [min5t](https://github.com/0330lavender12345)<br>
